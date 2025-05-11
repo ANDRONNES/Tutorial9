@@ -8,18 +8,18 @@ public class ProductsService : IProductsService
 
     public ProductsService(IConfiguration configuration)
     {
-        _connectionString = configuration.GetConnectionString("ConnectionStrings");
+        _connectionString = configuration.GetConnectionString("Default");
     }
     
     public async Task<bool> IsProductExistAsync(int productId,CancellationToken ct)
     {
-        string query = "Select count(*) from Product where Id = @productId";
+        string query = "Select count(*) from Product where IdProduct = @productId";
         using (SqlConnection conn = new SqlConnection(_connectionString))
         {
             using (SqlCommand cmd = new SqlCommand(query, conn))
             {
-                cmd.Parameters.AddWithValue("@productId", productId);
                 await conn.OpenAsync(ct);
+                cmd.Parameters.AddWithValue("@productId", productId);
                 int count = (int) await cmd.ExecuteScalarAsync(ct);
                 return count > 0;
             }

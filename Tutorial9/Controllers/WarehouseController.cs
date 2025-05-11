@@ -19,6 +19,6 @@ public class WarehouseController : ControllerBase
     public async Task<IActionResult> PostProductToWarehouse([FromBody] CreateWarehouseProductDTO warehouseProductDto,CancellationToken ct)
     {
         var newId = await _warehousesService.CreateProductToWarehouseAsync(warehouseProductDto, ct);
-        return Ok();
+        return Created("",new { messege = "Order added into warehouse.",Id = newId });
     }
 }

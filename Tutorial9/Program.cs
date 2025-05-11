@@ -1,3 +1,4 @@
+using Tutorial9.Middlewares;
 using Tutorial9.Services;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -20,6 +21,8 @@ if (app.Environment.IsDevelopment())
 {
     app.MapOpenApi();
 }
+
+app.UseGlobalExceptionHandling();
 
 app.UseAuthorization();
 

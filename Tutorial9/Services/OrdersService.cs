@@ -1,4 +1,5 @@
-﻿using Microsoft.Data.SqlClient;
+﻿using System.Transactions;
+using Microsoft.Data.SqlClient;
 
 namespace Tutorial9.Services;
 
@@ -8,7 +9,7 @@ public class OrdersService : IOrdersService
 
     public OrdersService(IConfiguration configuration)
     {
-        _connectionString = configuration.GetConnectionString("ConnectionStrings");
+        _connectionString = configuration.GetConnectionString("Default");
     }
 
     public async Task<int> IsProductInOrderExists(int IdProduct, int Amount, DateTime PutIntoWarehouse,
@@ -81,17 +82,14 @@ public class OrdersService : IOrdersService
         }
     }
 
-    public async Task<bool> UpdateFulfillDate(int orderId,CancellationToken ct)
+    public async Task UpdateFulfillDate(int orderId,CancellationToken ct,SqlConnection conn,SqlTransaction transaction)
     {
         string query = "Update [Order] set FulfilledAt = @fulfilledAt where IdOrder = @orderId";
-        using (SqlConnection conn = new SqlConnection(_connectionString))
-        using (SqlCommand cmd = new SqlCommand(query, conn))
+        using (SqlCommand cmd = new SqlCommand(query, conn,transaction))
         {
             cmd.Parameters.AddWithValue("@fulfilledAt", DateTime.Now);
             cmd.Parameters.AddWithValue("@orderId", orderId);
-            await conn.OpenAsync(ct);
-            int rowsAffected = await cmd.ExecuteNonQueryAsync(ct);
-            return rowsAffected > 0;
+            await cmd.ExecuteNonQueryAsync(ct);
         }
     }
 }
