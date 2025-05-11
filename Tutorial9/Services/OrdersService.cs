@@ -12,7 +12,7 @@ public class OrdersService : IOrdersService
         _connectionString = configuration.GetConnectionString("Default");
     }
 
-    public async Task<int> IsProductInOrderExists(int IdProduct, int Amount, DateTime PutIntoWarehouse,
+    public async Task<int> IsProductInOrderExistsAsync(int IdProduct, int Amount, DateTime PutIntoWarehouse,
         CancellationToken ct)
     {
         string query =
@@ -56,7 +56,7 @@ public class OrdersService : IOrdersService
         }
     }
 
-    public async Task<bool> IsOrderFulfilled(int orderId, CancellationToken ct)
+    public async Task<bool> IsOrderFulfilledAsync(int orderId, CancellationToken ct)
     {
         DateTime? fulfilledAt = null;
         string query =
@@ -82,12 +82,12 @@ public class OrdersService : IOrdersService
         }
     }
 
-    public async Task UpdateFulfillDate(int orderId,CancellationToken ct,SqlConnection conn,SqlTransaction transaction)
+    public async Task UpdateFulfillDateAsync(int orderId,DateTime CreatedAt,CancellationToken ct,SqlConnection conn,SqlTransaction transaction)
     {
         string query = "Update [Order] set FulfilledAt = @fulfilledAt where IdOrder = @orderId";
         using (SqlCommand cmd = new SqlCommand(query, conn,transaction))
         {
-            cmd.Parameters.AddWithValue("@fulfilledAt", DateTime.Now);
+            cmd.Parameters.AddWithValue("@fulfilledAt", CreatedAt);
             cmd.Parameters.AddWithValue("@orderId", orderId);
             await cmd.ExecuteNonQueryAsync(ct);
         }

@@ -1,4 +1,5 @@
-﻿using Microsoft.Data.SqlClient;
+﻿using System.Data;
+using Microsoft.Data.SqlClient;
 using Tutorial8.Exceptions;
 using Tutorial9.Model.DTOs;
 
@@ -44,13 +45,13 @@ public class WarehousesService : IWarehousesService
             throw new NotFoundException("Warehouse not found");
         }
 
-        OrderId = await _ordersService.IsProductInOrderExists(dto.IdProduct, dto.Amount, dto.CreatedAt, ct);
+        OrderId = await _ordersService.IsProductInOrderExistsAsync(dto.IdProduct, dto.Amount, dto.CreatedAt, ct);
         if (OrderId == 0)
         {
             throw new NotFoundException("Order not found");
         }
 
-        if (await _ordersService.IsOrderFulfilled(OrderId, ct))
+        if (await _ordersService.IsOrderFulfilledAsync(OrderId, ct))
         {
             throw new ConflictException("Order is already fulfilled");
         }
@@ -82,7 +83,7 @@ public class WarehousesService : IWarehousesService
                         }
                     }
 
-                    await _ordersService.UpdateFulfillDate(OrderId, ct,conn,transaction);
+                    await _ordersService.UpdateFulfillDateAsync(OrderId,dto.CreatedAt, ct,conn,transaction);
 
                     string query = @"Insert into Product_Warehouse(IdWarehouse,IdProduct,IdOrder,Amount,Price,CreatedAt)
                          values(@IdWarehouse,@IdProduct,@IdOrder,@Amount,@Price,@CreatedAt)
@@ -120,6 +121,25 @@ public class WarehousesService : IWarehousesService
             await conn.OpenAsync(ct);
             int count = (int)await cmd.ExecuteScalarAsync(ct);
             return count > 0;
+        }
+    }
+
+    public async Task<int> CreateProductToWarehouseProcedureAsync(CreateWarehouseProductDTO dto, CancellationToken ct)
+    {
+        using (SqlConnection conn = new SqlConnection(_connectionString))
+        {
+            using (SqlCommand cmd = new SqlCommand("AddProductToWarehouse ", conn))
+            {
+                cmd.CommandType = CommandType.StoredProcedure;
+                cmd.Parameters.AddWithValue("@IdProduct", dto.IdProduct);
+                cmd.Parameters.AddWithValue("@IdWarehouse", dto.IdWarehouse);
+                cmd.Parameters.AddWithValue("@Amount", dto.Amount);
+                cmd.Parameters.AddWithValue("@CreatedAt", dto.CreatedAt);
+                await conn.OpenAsync(ct);
+                
+                var newId = await cmd.ExecuteScalarAsync(ct);
+                return Convert.ToInt32(newId);
+            }
         }
     }
 }
